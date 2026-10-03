@@ -1,0 +1,24 @@
+# =============================================================================
+# Template cấu hình broker SERVER (tầng 3)
+# File mosquitto.conf được SINH từ file này bằng: ./scripts/render-config.sh
+# =============================================================================
+
+persistence true
+persistence_location /mosquitto/data/
+log_dest stdout
+connection_messages true
+
+# ---- Cổng nghe (TLS bắt buộc) ---------------------------------------------
+# Trong container luôn là 8883; ra ngoài host là cổng SERVER_PORT (8884)
+listener 8883
+cafile   /mosquitto/certs/ca.crt
+certfile /mosquitto/certs/server.crt
+keyfile  /mosquitto/certs/server.key
+tls_version tlsv1.2
+
+max_packet_size 8192
+max_connections 200
+
+allow_anonymous false
+password_file /mosquitto/config/passwd
+acl_file      /mosquitto/config/acl

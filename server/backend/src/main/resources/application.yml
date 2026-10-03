@@ -1,0 +1,100 @@
+# =============================================================================
+# Cấu hình backend (đặc tả mục 9). Chạy trên máy thật thì truyền biến môi trường
+# (đọc từ .env ở thư mục gốc dự án); giá trị mặc định dùng cho dev + test tự động.
+# =============================================================================
+spring:
+  application:
+    name: smarthome-backend
+
+  datasource:
+    # Trong docker-compose (Phase 6): jdbc:postgresql://postgres:5432/smarthome
+    # LƯ Ý múi giờ: PGJDBC gửi TimeZone của JVM lúc kết nối, mà image postgres:16 không
+    # có zoneinfo "Asia/Saigon" (tên mặc định của JDK trên Windows VN) -> bị PostgreSQL
+    # từ chối: FATAL: invalid value for parameter "TimeZone": "Asia/Saigon".
+    # scripts/backend.sh đã đặt -Duser.timezone=Asia/Ho_Chi_Minh (vẫn UTC+7); nếu chạy
+    # từ IDE thì thêm tùy chọn JVM này vào cấu hình chạy.
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/smarthome}
+    username: ${DB_USER:smarthome}
+    password: ${DB_PASSWORD:smarthome}
+    hikari:
+      maximum-pool-size: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: validate          # schema do Flyway tạo, Hibernate chỉ kiểm tra khớp entity
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC          # lưu TIMESTAMPTZ theo UTC, tránh lệch giờ khi demo
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  # Cổng HTTP cho REST API (Phase 3). Dùng BACKEND_HTTP_PORT chứ KHÔNG dùng
+  # SERVER_PORT: biến SERVER_PORT trong .env là cổng TLS của BROKER MQTT (8884),
+  # Spring Boot đọc nó qua relaxed binding -> nếu để tên SERVER_PORT thì backend sẽ
+  # tranh chiếm cổng của broker và lỗi "Port 8884 was already in use".
+  port: ${BACKEND_HTTP_PORT:8080}
+
+# -----------------------------------------------------------------------------
+# MQTT TLS tới broker SERVER (mục 9). Backend chạy trên host nên mặc định trỏ
+# tới 127.0.0.1:SERVER_PORT (8884); khi đóng gói Docker thì MQTT_URL=ssl://broker-server:8883
+# và MQTT_CA_CERT=/certs/ca.crt.
+# PHẢI dùng IP (không dùng "localhost"): SAN của cert chỉ có các IP trong CERT_IPS
+# và DNS broker-local/broker-server -> Paho sẽ lỗi kiểm tra hostname với localhost.
+# ./scripts/backend.sh tự đặt MQTT_URL=ssl://${SERVER_HOST}:${SERVER_PORT}.
+# -----------------------------------------------------------------------------
+mqtt:
+  enabled: ${MQTT_ENABLED:true}     # false = tắt hẳn MQTT (test tự động không cần broker)
+  url: ${MQTT_URL:ssl://127.0.0.1:8884}
+  username: ${MQTT_USERNAME:backend_user}
+  password: ${MQTT_PASSWORD:}
+  ca-cert: ${MQTT_CA_CERT:../broker-server/certs/ca.crt}
+  client-id: ${MQTT_CLIENT_ID:smarthome-backend}
+  qos: 1
+  keep-alive-seconds: 30
+  connection-timeout-seconds: 10
+  recovery-interval-ms: 5000        # chờ tối đa giữa các lần nối lại (automaticReconnect)
+
+logging:
+  level:
+    com.example.smarthome: INFO
+    org.springframework.integration.mqtt: INFO
+    org.eclipse.paho: WARN
+
+# -----------------------------------------------------------------------------
+# JWT (mục 9): HS256, secret lấy từ JWT_SECRET trong .env, hết hạn sau 8 giờ.
+# Secret trống thì REST vẫn khởi động được nhưng login/token sẽ báo lỗi rõ
+# (test tự động đặt jwt.secret qua property riêng).
+# -----------------------------------------------------------------------------
+jwt:
+  secret: ${JWT_SECRET:}
+  expire-minutes: ${JWT_EXPIRE_MINUTES:480}
+
+# -----------------------------------------------------------------------------
+# Cấu hình ứng dụng Phase 3 (đọc từ .env, KHÔNG hardcode bí mật trong yml).
+# -----------------------------------------------------------------------------
+app:
+  admin:
+    # Tài khoản admin được seed khi backend khởi động; để trống thì bỏ qua + log WARN.
+    username: ${ADMIN_USERNAME:}
+    password: ${ADMIN_PASSWORD:}
+  cors:
+    # Chỉ origin của frontend được gọi API (mục 9: CORS chỉ cho origin frontend).
+    # FRONTEND_ORIGIN nhận danh sách ngăn cách bằng dấu phẩy (không cách):
+    #   http://localhost:5173 = dev server Vite, http://localhost = origin khi mở từ
+    #   build tĩnh (cùng origin, khác cổng). Giá trị mặc định dưới đây chỉ để test/dev;
+    #   chạy thật thì lấy từ .env ở thư mục gốc.
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173,http://localhost}
+  command-timeout:
+    # Lệnh PENDING quá timeout-seconds mà không có ack thì thành TIMEOUT (mục 9).
+    # TÊN KHỐI PHẢI LÀ "command-timeout" (không phải "command"): CommandTimeoutJob đọc
+    # app.command-timeout.* - nếu đặt nhầm thành app.command.enabled thì biến
+    # COMMAND_TIMEOUT_JOB=false trong .env sẽ KHÔNG có tác dụng (job vẫn chạy).
+    enabled: ${COMMAND_TIMEOUT_JOB:true}
+    timeout-seconds: ${COMMAND_TIMEOUT_SECONDS:10}
+    poll-ms: ${COMMAND_POLL_MS:5000}
+

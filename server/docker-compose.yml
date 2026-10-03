@@ -1,0 +1,127 @@
+# =============================================================================
+# server/docker-compose.yml – Đóng gói toàn bộ tầng 3-5 (Phase 6)
+#
+# Chạy:  ./scripts/server-up.sh
+# Hoặc:  docker compose -f server/docker-compose.yml --env-file ../.env up -d --build
+#
+# Biến môi trường đọc từ ../.env (root dự án).
+# Broker LOCAL chạy riêng trên gateway – xem broker-local/docker-compose.yml.
+# =============================================================================
+name: smarthome-server
+
+services:
+
+  # ---------- Tầng 3: Broker MQTT Server -------------------------------------
+  broker-server:
+    image: eclipse-mosquitto:2
+    container_name: ${BROKER_SERVER_CONTAINER:-smarthome-broker-server}
+    ports:
+      - "${SERVER_PORT:-8884}:8883"
+    volumes:
+      - ./broker-server/config:/mosquitto/config
+      - ./broker-server/certs:/mosquitto/certs:ro
+      - broker_server_data:/mosquitto/data
+    restart: unless-stopped
+    healthcheck:
+      # Kiểm tra process mosquitto đang chạy (đơn giản, không cần TLS)
+      test: ["CMD-SHELL", "pgrep mosquitto > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 8s
+
+  # ---------- Tầng 4: PostgreSQL ---------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: ${DB_CONTAINER:-smarthome-postgres}
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${DB_USER} -d ${DB_NAME}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---------- Tầng 4: Backend Spring Boot ------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smarthome-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      broker-server:
+        condition: service_healthy
+    environment:
+      # Database (host "postgres" = tên service trong mạng Docker)
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # MQTT TLS tới broker-server (cổng nội bộ Docker luôn là 8883)
+      MQTT_ENABLED: "true"
+      MQTT_URL: ssl://broker-server:8883
+      MQTT_USERNAME: ${BACKEND_USERNAME}
+      MQTT_PASSWORD: ${BACKEND_PASSWORD}
+      MQTT_CA_CERT: /certs/ca.crt
+      # JWT + Admin
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      # CORS: trong Docker, frontend proxy qua nginx nên origin là http://localhost:3000
+      FRONTEND_ORIGIN: http://localhost:3000,http://localhost,${FRONTEND_ORIGIN}
+      # Port HTTP (phải khớp EXPOSE trong Dockerfile)
+      BACKEND_HTTP_PORT: 8080
+    ports:
+      - "${BACKEND_HTTP_PORT:-8080}:8080"
+    volumes:
+      # CA cert để backend xác thực TLS tới broker-server
+      - ./broker-server/certs:/certs:ro
+    restart: unless-stopped
+    healthcheck:
+      # eclipse-temurin không có wget/curl → dùng bash /dev/tcp hoặc nc
+      # Thực tế image có bash, dùng /dev/tcp để check port 8080
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8080' 2>/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ---------- Tầng 5: Frontend React (nginx) ---------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Trong Docker, frontend gọi /api/ và /ws qua nginx proxy (cùng origin)
+        # nên VITE_API_URL để trống; axios sẽ dùng đường dẫn tương đối.
+        VITE_API_URL: ""
+    container_name: smarthome-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -qO- http://localhost/ || exit 1
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  broker_server_data:
+  pg_data:

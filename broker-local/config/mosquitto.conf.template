@@ -1,0 +1,58 @@
+# =============================================================================
+# Template cấu hình broker LOCAL (tầng 2 - gateway)
+# File mosquitto.conf được SINH từ file này bằng: ./scripts/render-config.sh
+# Các chỗ có dạng @TEN_BIEN@ sẽ được thay bằng giá trị trong .env
+# =============================================================================
+
+persistence true
+persistence_location /mosquitto/data/
+log_dest stdout
+connection_messages true
+
+# ---- Cổng nghe cho thiết bị (TLS bắt buộc) --------------------------------
+listener 8883
+cafile   /mosquitto/certs/ca.crt
+certfile /mosquitto/certs/local.crt
+keyfile  /mosquitto/certs/local.key
+tls_version tlsv1.2
+
+# Giới hạn để giảm rủi ro bị lạm dụng
+max_packet_size 8192
+max_connections 200
+
+# Không cho phép kết nối ẩn danh
+allow_anonymous false
+password_file /mosquitto/config/passwd
+acl_file      /mosquitto/config/acl
+
+# =============================================================================
+# BRIDGE: broker LOCAL làm client nối lên broker SERVER
+# - remote_* : thông tin đăng nhập phía SERVER (phải trùng ACL server)
+# - local_username: tên tài khoản mà bridge dùng ở phía LOCAL,
+#   để ACL của broker local cấp quyền đọc các topic cần chuyển lên
+# - cleansession false + remote_clientid: giữ session, không mất message
+# =============================================================================
+connection to_server
+address @SERVER_HOST@:@SERVER_PORT@
+remote_clientid @BRIDGE_CLIENT_ID@
+remote_username @BRIDGE_USERNAME@
+remote_password @BRIDGE_PASSWORD@
+local_username  @BRIDGE_USERNAME@
+bridge_cafile   /mosquitto/certs/ca.crt
+bridge_tls_version tlsv1.2
+bridge_protocol_version mqttv311
+try_private true
+cleansession false
+start_type automatic
+restart_timeout 5 30
+notifications false
+
+# ---- Định tuyến topic qua cầu ---------------------------------------------
+# out = từ LOCAL lên SERVER (dữ liệu thiết bị)
+# in  = từ SERVER xuống LOCAL (lệnh điều khiển)
+# QoS 1 để không mất message (thiết bị publish QoS 0, bridge nâng lên QoS 1)
+topic sh/+/register  out 1
+topic sh/+/telemetry out 1
+topic sh/+/status    out 1
+topic sh/+/ack       out 1
+topic sh/+/cmd       in  1

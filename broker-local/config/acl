@@ -1,0 +1,27 @@
+# =============================================================================
+# ACL broker LOCAL (tầng 2)
+# Nguyên tắc: mỗi thiết bị CHỈ được ghi vào topic của chính nó (dùng %u = username).
+# Username MQTT của thiết bị = deviceId (ví dụ node1, node2).
+# =============================================================================
+
+# ---- Quy tắc chung cho mọi tài khoản --------------------------------------
+pattern write sh/%u/register
+pattern write sh/%u/telemetry
+pattern write sh/%u/status
+pattern write sh/%u/ack
+pattern read  sh/%u/cmd
+
+# ---- Bridge nội bộ (local_username = bridge_user trong mosquitto.conf) -----
+# Bridge cần ĐỌC dữ liệu của mọi thiết bị để chuyển lên server,
+# và cần GHI lệnh từ server xuống cho thiết bị.
+user bridge_user
+topic read  sh/+/register
+topic read  sh/+/telemetry
+topic read  sh/+/status
+topic read  sh/+/ack
+topic write sh/+/cmd
+
+# ---- Tài khoản giám sát/kiểm thử trên broker local (CHỈ ĐỌC) -------------
+# Dùng cho MQTTX, smoke-test và demo (xem được cả 2 phía của bridge).
+user local_monitor
+topic read sh/#

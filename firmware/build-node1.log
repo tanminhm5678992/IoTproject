@@ -1,0 +1,21 @@
+# Bằng chứng biên dịch node1_sensor (Phase 4 - bước 1)
+# Ngày: 02/10/2026 | arduino-cli 1.5.1 | esp32 core 3.3.11 | PubSubClient 2.8, ArduinoJson 7.4.3, DHT 1.4.7
+# Lệnh: arduino-cli compile --fqbn esp32:esp32:esp32c3:CDCOnBoot=cdc --warnings all firmware/node1_sensor
+# Kết quả: exit=0, KHÔNG có warning (đã kiểm bằng -Wformat, xem ghi chú bên dưới)
+#
+# Ghi chú sửa lỗi 02/10/2026 (sau bước 1 - nạp phần cứng thật):
+#   1. secrets.h: SSID_HOME/PASS_HOME còn là placeholder -> WiFi không bao giờ nối được.
+#   2. node1_sensor.ino dòng 239/337: WiFi.RSSI() trả int32_t nhưng printf dùng "%d"
+#      -> sửa thành "%ld" + (long) cast (cả log Serial lẫn payload telemetry "rssi").
+#   Vì payload telemetry đổi độ dài (rssi) nên kích thước sketch giảm 146 byte
+#   so với bản 1115905 byte đã ghi ở bước 1 (đổi MQTT_HOST_HOME 17->15 ký tự giảm tiếp 16 byte).
+#   3. THỨ TỰ WiFi <-> MQTT_HOST (quan trọng, phát hiện khi kiểm tra mạng thật):
+#      NET_PROFILES[] ghép cứng SSID_HOME <-> MQTT_HOST_HOME, SSID_PHONE <-> MQTT_HOST_PHONE.
+#      Máy đang nối WiFi "TrungTin" = 192.168.10.193 (KHÔNG phải 192.168.1.10 như .env giả định).
+#      => Phải điền mật khẩu TrungTin vào PASS_HOME, VÀ đổi MQTT_HOST_HOME = "192.168.10.193"
+#         (khớp GATEWAY_IP trong .env). Nếu không sửa MQTT_HOST_HOME, WiFi sẽ nối được
+#         nhưng MQTT báo state=-4 (timeout, sai IP broker) rồi state=-2.
+#   => Đây là lý do KHÔNG nên chỉ đổi WIFI_NET_COUNT 1 -> "TrungTin"; xem ghi chú 4.
+
+Sketch uses 1115743 bytes (85%) of program storage space. Maximum is 1310720 bytes.
+Global variables use 38296 bytes (11%) of dynamic memory, leaving 289384 bytes for local variables. Maximum is 327680 bytes.

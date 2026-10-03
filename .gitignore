@@ -1,0 +1,47 @@
+# ---------------------------------------------------------------------------
+# KHÔNG BAO GIỜ commit bí mật (mật khẩu WiFi, mật khẩu MQTT, khóa riêng TLS)
+# ---------------------------------------------------------------------------
+
+# File cấu hình cục bộ (chứa mật khẩu thật)
+.env
+.env.*
+!.env.example
+
+# Firmware: secrets.h có SSID/mật khẩu WiFi + khóa; chỉ commit bản .example
+firmware/**/secrets.h
+!firmware/common/secrets.h.example
+
+# Chứng chỉ: không commit khóa riêng và cert sinh tự động
+certs/out/
+*.key
+*.csr
+*.srl
+*.crt
+broker-local/certs/
+server/broker-server/certs/
+
+# Cấu hình sinh từ template (chứa mật khẩu bridge)
+broker-local/config/mosquitto.conf
+server/broker-server/config/mosquitto.conf
+!broker-local/config/mosquitto.conf.template
+!server/broker-server/config/mosquitto.conf.template
+
+# File mật khẩu Mosquitto
+broker-local/config/passwd
+server/broker-server/config/passwd
+
+# Backup file local
+*.local.*
+*.bak
+
+# Java (Maven) và frontend (Node)
+server/backend/target/
+server/frontend/node_modules/
+server/frontend/dist/
+
+# IDE / hệ điều hành
+.idea/
+.vscode/
+*.iml
+Thumbs.db
+desktop.ini

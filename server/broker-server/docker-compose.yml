@@ -1,0 +1,21 @@
+# Broker MQTT SERVER (tầng 3) - chạy trên máy chủ, ở đồ án này cùng laptop.
+# Trong container vẫn nghe 8883; ra host là SERVER_PORT (mặc định 8884) để
+# không trùng cổng với broker local. Bridge trỏ tới SERVER_HOST:SERVER_PORT.
+# Chạy bằng script: ./scripts/up.sh
+#
+# `name:` đặt tên project riêng để không dùng chung volume với dự án khác trên máy.
+name: smarthome-broker-server
+services:
+  broker-server:
+    image: eclipse-mosquitto:2
+    container_name: ${BROKER_SERVER_CONTAINER}
+    ports:
+      - "${SERVER_PORT}:8883"
+    volumes:
+      - ./config:/mosquitto/config
+      - ./certs:/mosquitto/certs:ro
+      - broker_server_data:/mosquitto/data
+    restart: unless-stopped
+
+volumes:
+  broker_server_data:

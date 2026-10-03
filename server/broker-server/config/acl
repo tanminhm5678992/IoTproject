@@ -1,0 +1,21 @@
+# =============================================================================
+# ACL broker SERVER (tầng 3)
+# Chỉ có 2 tài khoản, mỗi tài khoản quyền tối thiểu:
+#   - bridge_user  : chỉ ĐỌC dữ liệu thiết bị và GHI lệnh (chiều xuống)
+#   - backend_user : chỉ ĐỌC dữ liệu thiết bị và GHI lệnh (chiều xuống)
+# Không cấp quyền cho tài khoản nào khác.
+# =============================================================================
+
+user bridge_user
+topic write sh/+/register
+topic write sh/+/telemetry
+topic write sh/+/status
+topic write sh/+/ack
+topic read  sh/+/cmd
+
+user backend_user
+topic read  sh/+/register
+topic read  sh/+/telemetry
+topic read  sh/+/status
+topic read  sh/+/ack
+topic write sh/+/cmd

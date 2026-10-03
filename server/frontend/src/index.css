@@ -1,0 +1,1335 @@
+/* =============================================================================
+   Home Assistant Lovelace-Inspired Theme & Design System
+   Smart Home IoT Dashboard (ESP32-C3 + Mosquitto + Spring Boot + React)
+   ============================================================================= */
+
+/* --- CSS Variables & Design Tokens (Home Assistant Dark Palette) ---------- */
+:root {
+  /* Home Assistant Core Tokens (từ home-assistant-frontend/src/resources/theme/) */
+  --ha-space-1: 4px;
+  --ha-space-2: 8px;
+  --ha-space-3: 12px;
+  --ha-space-4: 16px;
+  --ha-space-5: 20px;
+  --ha-space-6: 24px;
+  --ha-space-8: 32px;
+
+  --ha-border-radius-sm: 4px;
+  --ha-border-radius-md: 8px;
+  --ha-border-radius-lg: 12px;
+  --ha-border-radius-xl: 16px;
+  --ha-border-radius-2xl: 20px;
+  --ha-border-radius-pill: 9999px;
+
+  /* Nền chuẩn Home Assistant Dark Palette */
+  --ha-bg-primary: #0f141c;
+  --ha-bg-secondary: #161c28;
+  --ha-card-bg: rgba(26, 33, 48, 0.85);
+  --ha-card-bg-hover: rgba(33, 42, 60, 0.95);
+  --ha-card-active: rgba(37, 49, 73, 0.9);
+  --ha-surface: #1e2638;
+  --ha-surface-elevated: #252f44;
+  --ha-input-bg: rgba(255, 255, 255, 0.05);
+  --ha-input-border: rgba(255, 255, 255, 0.12);
+
+  /* Màu chủ đạo Home Assistant (Primary & Domains) */
+  --ha-primary: #03a9f4;
+  --ha-primary-hover: #0288d1;
+  --ha-primary-glow: rgba(3, 169, 244, 0.25);
+  
+  /* Màu thực thể (Entities Color) */
+  --ha-light-on: #f59e0b;
+  --ha-light-on-bg: rgba(245, 158, 11, 0.15);
+  --ha-light-on-glow: rgba(245, 158, 11, 0.35);
+
+  --ha-relay-on: #0ea5e9;
+  --ha-relay-on-bg: rgba(14, 165, 233, 0.15);
+  --ha-relay-on-glow: rgba(14, 165, 233, 0.35);
+
+  --ha-temp-color: #f97316;
+  --ha-temp-bg: rgba(249, 115, 22, 0.12);
+  
+  --ha-hum-color: #06b6d4;
+  --ha-hum-bg: rgba(6, 182, 212, 0.12);
+
+  /* Trạng thái hệ thống */
+  --ha-online: #10b981;
+  --ha-online-bg: rgba(16, 185, 129, 0.12);
+  --ha-offline: #64748b;
+  --ha-offline-bg: rgba(100, 116, 139, 0.15);
+  --ha-danger: #ef4444;
+  --ha-danger-bg: rgba(239, 68, 68, 0.15);
+  --ha-warning: #f59e0b;
+
+  /* Văn bản (Semantic Text) */
+  --ha-text-primary: #f8fafc;
+  --ha-text-secondary: #94a3b8;
+  --ha-text-muted: #64748b;
+  --ha-text-link: #38bdf8;
+
+  /* Viền & Đổ bóng (Semantic Shadows theo HA) */
+  --ha-border: rgba(255, 255, 255, 0.08);
+  --ha-border-hover: rgba(255, 255, 255, 0.18);
+  --ha-radius-sm: var(--ha-border-radius-sm);
+  --ha-radius-md: var(--ha-border-radius-md);
+  --ha-radius-lg: var(--ha-border-radius-lg);
+  --ha-radius-xl: var(--ha-border-radius-xl);
+  --ha-radius-pill: var(--ha-border-radius-pill);
+
+  --ha-box-shadow-s: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --ha-box-shadow-m: 0 4px 16px -2px rgba(0, 0, 0, 0.45);
+  --ha-box-shadow-l: 0 10px 25px -5px rgba(0, 0, 0, 0.55);
+
+  --ha-shadow-card: var(--ha-box-shadow-m);
+  --ha-shadow-elevated: var(--ha-box-shadow-l);
+
+  --ha-font: 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ha-transition: all 0.18s ease-in-out;
+}
+
+/* --- Base & Reset --------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--ha-font);
+  background-color: var(--ha-bg-primary);
+  color: var(--ha-text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(3, 169, 244, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.03) 0%, transparent 40%);
+  background-attachment: fixed;
+}
+
+/* --- Layout & Header ------------------------------------------------------ */
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(15, 20, 28, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--ha-border);
+}
+
+.header-inner {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.header-brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ha-radius-md);
+  background: linear-gradient(135deg, #03a9f4, #0284c7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px var(--ha-primary-glow);
+  color: white;
+}
+
+.header-brand h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ha-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-brand .ha-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(3, 169, 244, 0.15);
+  color: #38bdf8;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--ha-radius-pill);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+/* Lovelace Quick Badges on Header */
+.header-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.lovelace-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  background: var(--ha-surface);
+  border: 1px solid var(--ha-border);
+  border-radius: var(--ha-radius-pill);
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--ha-text-secondary);
+  transition: var(--ha-transition);
+}
+
+.lovelace-badge:hover {
+  border-color: var(--ha-border-hover);
+  background: var(--ha-surface-elevated);
+}
+
+.lovelace-badge.live-pulse {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--ha-online);
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ha-online);
+  box-shadow: 0 0 8px var(--ha-online);
+  animation: pulse-ring 2s infinite ease-out;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--ha-radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ha-text-secondary);
+  text-decoration: none;
+  transition: var(--ha-transition);
+}
+
+.nav-link:hover {
+  color: var(--ha-text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-link.active {
+  color: var(--ha-primary);
+  background: rgba(3, 169, 244, 0.12);
+  border: 1px solid rgba(3, 169, 244, 0.25);
+}
+
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--ha-radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ha-danger);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--ha-transition);
+}
+
+.btn-logout:hover {
+  background: var(--ha-danger-bg);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Main Container */
+.main-content {
+  flex: 1;
+  max-width: 1380px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem 3rem;
+}
+
+/* --- Lovelace Dashboard Components ---------------------------------------- */
+
+/* Page Header & Section Title */
+.ha-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.ha-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ha-section-title h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ha-text-primary);
+}
+
+.ha-section-title p {
+  color: var(--ha-text-secondary);
+  font-size: 0.875rem;
+  margin-top: 0.15rem;
+}
+
+.ha-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Home Assistant Tile Cards Grid */
+.ha-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* Home Assistant Tile Card */
+.ha-tile-card {
+  background: var(--ha-card-bg);
+  border: 1px solid var(--ha-border);
+  border-radius: var(--ha-radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--ha-shadow-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: var(--ha-transition);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.ha-tile-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  transition: var(--ha-transition);
+}
+
+.ha-tile-card:hover {
+  transform: translateY(-2px);
+  background: var(--ha-card-bg-hover);
+  border-color: var(--ha-border-hover);
+  box-shadow: var(--ha-shadow-elevated);
+}
+
+.ha-tile-card.online::before {
+  background: linear-gradient(90deg, #10b981, #06b6d4);
+}
+
+.ha-tile-card.offline::before {
+  background: #64748b;
+}
+
+/* Tile Top Area */
+.ha-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ha-tile-entity {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.ha-icon-badge {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  transition: var(--ha-transition);
+  flex-shrink: 0;
+}
+
+.ha-icon-badge.sensor {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.ha-icon-badge.actuator {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+.ha-icon-badge.bulb-on {
+  background: var(--ha-light-on-bg);
+  color: var(--ha-light-on);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 14px var(--ha-light-on-glow);
+}
+
+.ha-icon-badge.bulb-off {
+  background: rgba(255, 255, 255, 0.05);
+  color: #64748b;
+  border: 1px solid var(--ha-border);
+}
+
+.ha-tile-meta h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ha-text-primary);
+  line-height: 1.25;
+}
+
+.ha-tile-meta .ha-device-id {
+  font-size: 0.8rem;
+  color: var(--ha-text-muted);
+  font-family: monospace;
+  margin-top: 0.15rem;
+}
+
+.ha-badges-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+/* Home Assistant Metric Cards inside Tile */
+.ha-metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.ha-metric-box {
+  background: var(--ha-surface);
+  border: 1px solid var(--ha-border);
+  border-radius: var(--ha-radius-md);
+  padding: 0.75rem 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: var(--ha-transition);
+}
+
+.ha-metric-box:hover {
+  background: var(--ha-surface-elevated);
+}
+
+.ha-metric-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--ha-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ha-metric-icon.temp {
+  background: var(--ha-temp-bg);
+  color: var(--ha-temp-color);
+}
+
+.ha-metric-icon.hum {
+  background: var(--ha-hum-bg);
+  color: var(--ha-hum-color);
+}
+
+.ha-metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.ha-metric-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ha-text-muted);
+  font-weight: 600;
+}
+
+.ha-metric-val {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ha-text-primary);
+  line-height: 1.2;
+}
+
+.ha-metric-val.temp-text {
+  color: #fdba74;
+}
+
+.ha-metric-val.hum-text {
+  color: #67e8f9;
+}
+
+/* Filter Bar & Chips (Lovelace View Navigation) */
+.ha-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.ha-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--ha-radius-pill);
+  background: var(--ha-surface);
+  border: 1px solid var(--ha-border);
+  color: var(--ha-text-secondary);
+  font-size: 0.825rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--ha-transition);
+}
+
+.ha-filter-chip:hover {
+  background: var(--ha-surface-elevated);
+  border-color: var(--ha-border-hover);
+  color: var(--ha-text-primary);
+}
+
+.ha-filter-chip.active {
+  background: rgba(3, 169, 244, 0.15);
+  border-color: rgba(3, 169, 244, 0.4);
+  color: var(--ha-primary);
+  box-shadow: 0 0 10px rgba(3, 169, 244, 0.2);
+}
+
+.ha-chip-count {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--ha-radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+}
+
+/* Lovelace Section Block (Sections Layout) */
+.ha-section-block {
+  margin-bottom: 2.25rem;
+}
+
+.ha-section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ha-text-primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ha-section-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--ha-radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ha-text-secondary);
+}
+
+/* Tile Footer */
+.ha-tile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ha-border);
+  font-size: 0.78rem;
+  color: var(--ha-text-muted);
+}
+
+/* Home Assistant Tile Features (Inline Controls) */
+.ha-tile-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.ha-feature-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--ha-radius-md);
+  border: 1px solid var(--ha-border);
+  background: var(--ha-surface);
+  color: var(--ha-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--ha-transition);
+}
+
+.ha-feature-btn:hover:not(:disabled) {
+  background: var(--ha-surface-elevated);
+  border-color: var(--ha-border-hover);
+  color: var(--ha-text-primary);
+}
+
+.ha-feature-btn.is-active {
+  background: rgba(3, 169, 244, 0.16);
+  border-color: rgba(3, 169, 244, 0.45);
+  color: var(--ha-primary);
+  box-shadow: 0 0 10px rgba(3, 169, 244, 0.2);
+}
+
+.ha-feature-btn.is-active.is-light {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: var(--ha-light-on);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+.ha-feature-btn.is-pending {
+  animation: pulse-border 1.5s infinite;
+}
+
+.ha-feature-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ha-feature-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #64748b;
+  transition: var(--ha-transition);
+}
+
+.ha-feature-btn.is-active .ha-feature-status-dot {
+  background: var(--ha-primary);
+  box-shadow: 0 0 6px var(--ha-primary);
+}
+
+.ha-feature-btn.is-active.is-light .ha-feature-status-dot {
+  background: var(--ha-light-on);
+  box-shadow: 0 0 6px var(--ha-light-on);
+}
+
+/* Home Assistant Statistics Summary Chips (History Graph Card) */
+.ha-stat-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.ha-stat-chip {
+  background: var(--ha-surface);
+  border: 1px solid var(--ha-border);
+  border-radius: var(--ha-radius-md);
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  transition: var(--ha-transition);
+}
+
+.ha-stat-chip:hover {
+  background: var(--ha-surface-elevated);
+  border-color: var(--ha-border-hover);
+}
+
+.ha-stat-chip-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ha-text-muted);
+  font-weight: 600;
+}
+
+.ha-stat-chip-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ha-text-primary);
+}
+
+.ha-status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 0.375rem;
+}
+
+.ha-status-dot.online {
+  background: var(--ha-online);
+  box-shadow: 0 0 6px var(--ha-online);
+}
+
+.ha-status-dot.offline {
+  background: var(--ha-offline);
+}
+
+/* --- Interactive Switch & Actuator Cards (Lovelace Style) ----------------- */
+.ha-actuators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.ha-switch-card {
+  background: var(--ha-card-bg);
+  border: 1px solid var(--ha-border);
+  border-radius: var(--ha-radius-lg);
+  padding: 1rem 1.15rem;
+  box-shadow: var(--ha-shadow-card);
+  transition: var(--ha-transition);
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.ha-switch-card.is-on {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(30, 36, 50, 0.95);
+  box-shadow: 0 4px 20px -2px var(--ha-light-on-glow);
+}
+
+.ha-switch-card.is-on.is-relay {
+  border-color: rgba(14, 165, 233, 0.4);
+  box-shadow: 0 4px 20px -2px var(--ha-relay-on-glow);
+}
+
+.ha-switch-card.is-pending {
+  border-color: rgba(245, 158, 11, 0.6);
+  animation: pulse-border 1.5s infinite;
+}
+
+@keyframes pulse-border {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; border-color: rgba(3, 169, 244, 0.8); }
+  100% { opacity: 0.8; }
+}
+
+.ha-switch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ha-switch-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ha-switch-meta h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ha-text-primary);
+}
+
+.ha-switch-meta span {
+  font-size: 0.75rem;
+  color: var(--ha-text-muted);
+}
+
+/* Home Assistant Style Toggle Switch Button */
+.ha-toggle-btn {
+  width: 50px;
+  height: 28px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  position: relative;
+  cursor: pointer;
+  transition: var(--ha-transition);
+  padding: 2px;
+}
+
+.ha-toggle-btn.active {
+  background: var(--ha-light-on);
+  border-color: var(--ha-light-on);
+  box-shadow: 0 0 12px var(--ha-light-on-glow);
+}
+
+.ha-toggle-btn.active.is-relay {
+  background: var(--ha-relay-on);
+  border-color: var(--ha-relay-on);
+  box-shadow: 0 0 12px var(--ha-relay-on-glow);
+}
+
+.ha-toggle-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: var(--ha-transition);
+  transform: translateX(0);
+}
+
+.ha-toggle-btn.active .ha-toggle-thumb {
+  transform: translateX(22px);
+}
+
+.ha-switch-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.btn-ha-control {
+  padding: 0.45rem 0.5rem;
+  border-radius: var(--ha-radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--ha-border);
+  background: var(--ha-surface);
+  color: var(--ha-text-secondary);
+  cursor: pointer;
+  transition: var(--ha-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.btn-ha-control:hover:not(:disabled) {
+  background: var(--ha-surface-elevated);
+  color: var(--ha-text-primary);
+  border-color: var(--ha-border-hover);
+}
+
+.btn-ha-control.btn-on:hover:not(:disabled) {
+  background: var(--ha-online-bg);
+  color: var(--ha-online);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.btn-ha-control.btn-off:hover:not(:disabled) {
+  background: var(--ha-danger-bg);
+  color: var(--ha-danger);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-ha-control:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Lovelace Activity Logbook (Command History) ------------------------- */
+.ha-logbook-card {
+  background: var(--ha-card-bg);
+  border: 1px solid var(--ha-border);
+  border-radius: var(--ha-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--ha-shadow-card);
+  backdrop-filter: blur(12px);
+}
+
+.ha-card-header {
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid var(--ha-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ha-card-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ha-text-primary);
+}
+
+.ha-logbook-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ha-logbook-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: var(--ha-transition);
+}
+
+.ha-logbook-item:last-child {
+  border-bottom: none;
+}
+
+.ha-logbook-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ha-logbook-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.ha-logbook-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ha-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+.ha-logbook-info h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ha-text-primary);
+}
+
+.ha-logbook-info span {
+  font-size: 0.75rem;
+  color: var(--ha-text-muted);
+}
+
+/* --- Common UI Elements --------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--ha-radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--ha-transition);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--ha-primary);
+  color: white;
+  box-shadow: 0 0 16px var(--ha-primary-glow);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--ha-primary-hover);
+  box-shadow: 0 0 20px rgba(3, 169, 244, 0.4);
+}
+
+.btn-ghost {
+  background: var(--ha-surface);
+  border: 1px solid var(--ha-border);
+  color: var(--ha-text-secondary);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--ha-surface-elevated);
+  border-color: var(--ha-border-hover);
+  color: var(--ha-text-primary);
+}
+
+.btn-danger {
+  background: var(--ha-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--ha-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--ha-danger);
+  color: white;
+}
+
+/* Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--ha-radius-pill);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-badge.online {
+  background: var(--ha-online-bg);
+  color: var(--ha-online);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.status-badge.offline {
+  background: var(--ha-offline-bg);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.status-badge.type-sensor {
+  background: rgba(139, 92, 246, 0.12);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.status-badge.type-actuator {
+  background: rgba(14, 165, 233, 0.12);
+  color: #7dd3fc;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+.status-badge.done {
+  background: var(--ha-online-bg);
+  color: var(--ha-online);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.status-badge.pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--ha-warning);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.status-badge.error {
+  background: var(--ha-danger-bg);
+  color: var(--ha-danger);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.status-badge.timeout {
+  background: rgba(139, 92, 246, 0.12);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Loading & Empty States */
+.loading-state, .empty-state, .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  background: var(--ha-card-bg);
+  border: 1px dashed var(--ha-border);
+  border-radius: var(--ha-radius-lg);
+  text-align: center;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(3, 169, 244, 0.15);
+  border-top-color: var(--ha-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Form Styles & Controls */
+.card {
+  background: var(--ha-card-bg);
+  border: 1px solid var(--ha-border);
+  border-radius: var(--ha-radius-lg);
+  box-shadow: var(--ha-shadow-card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.card-body {
+  padding: 1.75rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ha-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ha-text-secondary);
+}
+
+.form-input,
+.form-select,
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--ha-radius-md);
+  color: var(--ha-text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: var(--ha-transition);
+  box-sizing: border-box;
+}
+
+.form-input::placeholder {
+  color: var(--ha-text-muted);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-control:focus {
+  border-color: var(--ha-primary);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px var(--ha-primary-glow);
+}
+
+.form-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px;
+  padding-right: 2.5rem;
+}
+
+.form-select option {
+  background: #161c28;
+  color: #f8fafc;
+  padding: 0.75rem;
+}
+
+/* Button Modifiers */
+.btn-block {
+  width: 100%;
+  display: flex;
+}
+
+.btn-lg {
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--ha-radius-md);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* Login Page Styling */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  background: radial-gradient(circle at 50% 20%, rgba(3, 169, 244, 0.1) 0%, transparent 60%),
+              radial-gradient(circle at 80% 80%, rgba(245, 158, 11, 0.05) 0%, transparent 50%),
+              var(--ha-bg-primary);
+}
+
+.login-box {
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem;
+  background: rgba(22, 28, 40, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--ha-radius-xl);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.login-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-logo-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--ha-radius-lg);
+  background: linear-gradient(135deg, #03a9f4, #0284c7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 24px var(--ha-primary-glow);
+  margin-bottom: 1rem;
+}
+
+.login-logo h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--ha-text-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35rem;
+}
+
+.login-logo p {
+  font-size: 0.9rem;
+  color: var(--ha-text-secondary);
+}
+
+.login-error {
+  background: var(--ha-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  padding: 0.75rem 1rem;
+  border-radius: var(--ha-radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Registration Result Box */
+.register-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.register-result h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ha-online);
+  margin-bottom: 1rem;
+}
+
+.token-display {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(3, 169, 244, 0.3);
+  border-radius: var(--ha-radius-md);
+  padding: 0.85rem 1rem;
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #38bdf8;
+  word-break: break-all;
+  user-select: all;
+  margin-top: 0.35rem;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.hint {
+  background: rgba(3, 169, 244, 0.08);
+  border: 1px solid rgba(3, 169, 244, 0.2);
+  border-radius: var(--ha-radius-md);
+  padding: 1rem 1.15rem;
+  font-size: 0.825rem;
+  line-height: 1.7;
+  color: #cbd5e1;
+  margin-top: 0.75rem;
+}
+
+.hint code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  color: #38bdf8;
+  font-family: monospace;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .header-badges {
+    display: none;
+  }
+  .ha-tiles-grid {
+    grid-template-columns: 1fr;
+  }
+  .login-box {
+    padding: 1.75rem 1.25rem;
+  }
+}

@@ -1,0 +1,23 @@
+# Broker MQTT LOCAL (tầng 2) - chạy trên gateway, cùng laptop này (Docker Desktop + WSL2)
+# Chạy bằng script (script tự truyền --env-file ở thư mục gốc):
+#   ./scripts/up.sh
+#
+# `name:` đặt tên project riêng để KHÔNG dùng chung volume/network với các dự án
+# khác trên cùng máy (ví dụ dự án cũ cũng có thư mục broker-local).
+name: smarthome-broker-local
+services:
+  broker-local:
+    image: eclipse-mosquitto:2
+    container_name: ${BROKER_LOCAL_CONTAINER}
+    ports:
+      # ESP32 / MQTTX kết nối vào GATEWAY_IP:LOCAL_PORT qua WiFi
+      - "${LOCAL_PORT}:8883"
+    volumes:
+      # config ghi được để add-device.sh thêm tài khoản vào passwd
+      - ./config:/mosquitto/config
+      - ./certs:/mosquitto/certs:ro
+      - broker_local_data:/mosquitto/data
+    restart: unless-stopped
+
+volumes:
+  broker_local_data:
